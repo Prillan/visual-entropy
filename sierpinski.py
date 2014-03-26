@@ -109,9 +109,6 @@ def main():
     parser.add_argument("--size", nargs=1, default=[512], dest="arg_size",
                         metavar="PIXELS", type=int,
                         help="Size of the window in pixels")
-    parser.add_argument("-b", "--block-size", nargs=1, default=[1], type=int,
-                        metavar="BYTES", help="Number of bytes to represent "
-                        "one point. Bytes are XOR'ed together.")
     parser.add_argument("-d", "--debug", action="store_true", default=False,
                         help="Activate debugging.")
 
