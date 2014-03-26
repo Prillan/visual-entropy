@@ -22,15 +22,15 @@ shape = []
 
 points = []
 
-pointx = lambda n, h: 1 - math.sin((2*h + 1) * math.pi / n)
-pointy = lambda n, h: 1 - math.cos((2*h + 1) * math.pi / n)
+pointx = lambda n, h: 1 - math.sin((2*h + 1) * math.pi // n)
+pointy = lambda n, h: 1 - math.cos((2*h + 1) * math.pi // n)
 point = lambda n, h: (
     pointx(n, h),
     pointy(n, h)
     )
 pointonscreen = lambda n, h: (
-    (SIZE / 2 * pointx(n, h)) + 5,
-    (SIZE / 2 * pointy(n, h)) + 5
+    (SIZE // 2 * pointx(n, h)) + 5,
+    (SIZE // 2 * pointy(n, h)) + 5
     )
 getpolygon = lambda n: [pointonscreen(n, h) for h in range(n)]
 
@@ -43,10 +43,10 @@ def getglpolygon(n):
 def drawpolygon(n):
     points = getglpolygon(n)
 
-    pyglet.graphics.draw(len(points) / 2, pyglet.gl.GL_LINE_LOOP, ('v2f', points), ('c4B', (255, 0, 0, 128) * (len(points)/ 2)))
+    pyglet.graphics.draw(len(points) // 2, pyglet.gl.GL_LINE_LOOP, ('v2f', points), ('c4B', (255, 0, 0, 128) * (len(points)// 2)))
 
 def draw(points):
-    pyglet.graphics.draw(len(points) / 2, pyglet.gl.GL_POINTS, ('v2f', points))#, ("c4B", colors))
+    pyglet.graphics.draw(len(points) // 2, pyglet.gl.GL_POINTS, ('v2f', points))#, ("c4B", colors))
     
 def halfDist(x, y):
     return int((float(D[0]) * x + y) / D[1])
@@ -93,7 +93,7 @@ def getPoints(filedata, r):
 
 def drawPoints(filedata, r, n):
     global points
-    current = (SIZE / 2, SIZE / 2)
+    current = (SIZE // 2, SIZE // 2)
     i = 0
     for p in filedata:
         xl = r(p, n)
@@ -128,12 +128,10 @@ def main():
         for i in range(n):
             if x < (i+1) * (256.0 / n):
                 return i
-    
+
     functions = {
         "mod" : lambda x, y: [x % y],
         "split" : lambda x, y: [split(x, y)]
-        #,
-        #"baseN" : lambda x, y: [x % 3, (x / 3) % 3, (x / 9) % 3, (x / 27) % 3, (x / 81) % 3]
         }
 
     parser.add_argument("-f", "--file", nargs=1, default="", dest="arg_file", metavar="FILE", 
