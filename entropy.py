@@ -44,7 +44,7 @@ def freqentropy(f, blocksize, maxbytes=0):
     e = 0
 
     if count == 0:
-        print f, blocksize, maxbytes
+        print((f, blocksize, maxbytes))
 
     T1 = 1 / float(count)
     lTT1 = math.log(count, 256 ** blocksize) * T1
@@ -60,7 +60,7 @@ def freqentropy(f, blocksize, maxbytes=0):
 def main():
     args = parser.parse_args()
     
-    print args
+    print(args)
 
     elist = []
 
@@ -74,14 +74,14 @@ def main():
 
         maxbytes = float(size) / float(args.pieces[0])
         
-        print "byte,entropy" if not args.x_data[0] == "percent" else "percent,entropy"
+        print(("byte,entropy" if not args.x_data[0] == "percent" else "percent,entropy"))
     
         for i in range(args.pieces[0]):
             maxbyte = ((i + 1) * maxbytes)
             e.append((int(maxbyte), freqentropy(f, args.block_size[0], int(maxbytes))))
             if args.x_data[0] == "percent":
                 e[len(e) - 1] = (e[len(e) - 1][0] / float(size), e[len(e) - 1][1])
-            print str(e[len(e) - 1][0]) + "," + str(e[len(e) - 1][1])
+            print((str(e[len(e) - 1][0]) + "," + str(e[len(e) - 1][1])))
 
         elist.append(e)
 

@@ -7,6 +7,7 @@ import random
 import sys
 import argparse
 import math
+from functools import reduce
 
 SIZE = 500
 N = 3
@@ -153,7 +154,7 @@ def main():
     
     #print p
 
-    if len(p.arg_fun) > 0 and functions.has_key(p.arg_fun[0]):
+    if len(p.arg_fun) > 0 and p.arg_fun[0] in functions:
         fun = functions[p.arg_fun[0]]
     else:
         fun = lambda x, y: [x % y]
@@ -163,7 +164,7 @@ def main():
     else:
 
         LIMIT = p.arg_num[0]
-        data = (random.randint(0, 255) for i in xrange(LIMIT))
+        data = (random.randint(0, 255) for i in range(LIMIT))
     
     N = p.arg_shape[0]
     SIZE = p.arg_size[0]
@@ -196,13 +197,13 @@ def main():
 
     def draw_it(dt):
         try:
-            draw_gen.next()
+            next(draw_gen)
         except StopIteration:
             window.set_caption("Done!")
 
     pyglet.clock.schedule_interval(draw_it, 0.1)
 
-    print "Running"
+    print("Running")
     pyglet.app.run()
 
 if __name__ == "__main__":
