@@ -4,9 +4,12 @@ import random
 import sys
 import argparse
 import math
+from bitarray import bitarray
 from functools import reduce
 
 from drawing import draw, drawpolygon
+
+CHUNK_SIZE = 1024
 
 def polygon(n):
     return [(
@@ -16,52 +19,67 @@ def polygon(n):
 def avg(x, y):
     return (x + y) / 2
 
-def file_data(fname, block=1):
+def file_data(fname):
     f = open(fname, 'rb')
     try:
         while True:
-            c = f.read(block)
-            yield reduce(lambda x,y: x ^ ord(y), c, 0)
+            chunk = f.read(CHUNK_SIZE)
+            if len(chunk) > 0:
+                yield chunk
+            else:
+                break
     except:
         pass
     f.close()
+
+def random_data(num_bytes):
+    for x in range(num_bytes // CHUNK_SIZE):
+        yield bytes(random.randint(0, 255) for i in range(CHUNK_SIZE))
 
 def getcolor(x, n):
     a = int(float(0xFFFFFF)*float(x + 1)/n)
     b = ((a & 0xFF0000) >> 16, (a & 0x00FF00) >> 8, a & 0x0000FF, 255)
     return b
 
-def pointsgen(filedata, r, n, shape):
+def streamgen(data, n, skip=True):
+    bit_buffer = bitarray()
+    bits_needed = int(math.ceil(math.log2(n)))
+
+    for chunk in data:
+        bit_buffer.frombytes(chunk)
+        while len(bit_buffer) >= bits_needed:
+            val = bit_buffer[:bits_needed].tobytes()
+            bit_buffer = bit_buffer[bits_needed:]
+            if val[0] >= n and not skip:
+                yield val[0] % n
+            elif val[0] < n:
+                yield val[0]
+
+def modgen(data, n):
+    for chunk in data:
+        for b in chunk:
+            yield b % n
+
+def pointsgen(data, n, shape):
     current = (0, 0)
     i = 0
     points = []
-    for p in filedata:
-        xl = r(p, n)
-        for x in xl:
-            current = (
-                avg(current[0], shape[x][0]),
-                avg(current[1], shape[x][1])
-            )
-            i += 1
-            points.append(current)
-            if i > 10000:
-                i = 0
-                yield points
-                points = []
+
+    for b in data:
+        current = (
+            avg(current[0], shape[b][0]),
+            avg(current[1], shape[b][1])
+        )
+        i += 1
+        points.append(current)
+        if i > 10000:
+            i = 0
+            yield points
+            points = []
 
     yield points
 
 def main():
-
-    def split(x, n):
-        for i in range(n):
-            if x < (i+1) * (256.0 / n):
-                return i
-
-    functions = {
-        "mod" : lambda x, y: [x % y],
-        "split" : lambda x, y: [split(x, y)]
-        }
 
     parser = argparse.ArgumentParser(
         description="A program for generating fractal patterns using random "
@@ -72,10 +90,16 @@ def main():
                         dest="arg_file", metavar="FILE",
                         help="File to use as binary input."
                         "If no file is given random data will be used.")
-    parser.add_argument("-r", "--fun", nargs=1, default="", dest="arg_fun",
-                        metavar="FUNCTION", choices=functions,
-                        help="The reduction function to use. \n"
-                        "Valid choices: %(choices)s")
+    modes = ["stream", "mod", "streammod"]
+    parser.add_argument("-m", "--mode", default="mod",
+                        metavar="MODE", choices=modes, type=str,
+                        help="The mode to use. \n"
+                        "  mod - The read byte value is reduced modulus the "
+                        "number of edges\n"
+                        "  stream - All bits are used in a stream, meaning that"
+                        "bytes may overlap. Bytes outside of the interval (0, "
+                        "EDGES) will be skipped\n"
+                        "  streammod - stream and mod combined.")
     parser.add_argument("-n", nargs=1, default=[20000], dest="arg_num",
                         metavar="BYTES", type=int,
                         help="The number of bytes to use if no file is given.")
@@ -93,15 +117,10 @@ def main():
 
     p = parser.parse_args()
 
-    if len(p.arg_fun) > 0 and p.arg_fun[0] in functions:
-        fun = functions[p.arg_fun[0]]
-    else:
-        fun = lambda x, y: [x % y]
-
     if len(p.arg_file) > 0 and len(p.arg_file[0]) > 0:
-        data = file_data(p.arg_file[0], p.block_size[0])
+        data = file_data(p.arg_file[0])
     else:
-        data = (random.randint(0, 255) for i in range(p.arg_num[0]))
+        data = random_data(p.arg_num[0])
 
     edges = p.arg_shape[0]
     screen_size = p.arg_size[0]
@@ -118,7 +137,13 @@ def main():
 
     window.clear()
 
-    points = pointsgen(data, fun, edges, shape)
+    generator = modgen
+    if p.mode == "stream":
+        generator = streamgen
+    elif p.mode == "streammod":
+        generator = lambda x, y: streamgen(x, y, skip=False)
+
+    points = pointsgen(generator(data, edges), edges, shape)
 
     window.set_caption("Not Done!")
 
