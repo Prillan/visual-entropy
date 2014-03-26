@@ -1,0 +1,2 @@
+bitarray>=0.8.1
+https://pyglet.googlecode.com/files/pyglet-1.2alpha1.tar.gz
